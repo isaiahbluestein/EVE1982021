@@ -1,0 +1,54 @@
+---
+title: "Exercise 2.2"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#Exercise 2.2 Ploting in ggplot
+```{r}
+library(ggplot2)
+library(tidyverse)
+```
+
+# 1. Add best fit lines to our msleep plot for each order.
+```{r}
+ggplot(msleep, aes(y=sleep_total, x=sleep_rem, group=as.factor(vore), color=as.factor(vore)))+
+  geom_point()+
+  labs(y="Total Sleep (hours)", x="REM Sleep (hours")+
+  theme_classic()+
+  #scale_color_manual(values=rainbow(5))
+  scale_color_manual(name="Diet", 
+                     labels = c("Carnivore", 
+                                "Herbivore", 
+                                "Insectivore", 
+                                "Omnivore", 
+                                "NA"), 
+                     values = c("carni"="blue", 
+                                "herbi"="red", 
+                                "insecti"="green", 
+                                "omni"="brown", 
+                                "NA"="orange"))+
+  geom
+```
+
+  
+# 2. In the msleep data, make a boxplot of sleep_total against vore. Make sure vore is a factor. Color the boxplots by vore (remember how we had to color the boxplots in base R) it is similar in ggplot.  
+
+
+
+# 3. Load a new dataframe `midwest`(run data(midwest)) and plot a scatterplot of area against popdensity grouped and color by state. Do a facet grid by state.
+
+
+
+#  4. In the midwest dataframe make a scatterplot of the popdensity by poptotal of only IL (this requires you to subset your data for illinois).
+
+
+
+
+# 5. In the midwest dataframe plot the mean and standard error for popdensity for each state. Color this plot in your favorite palette.

@@ -1,0 +1,146 @@
+---
+title: "Untitled"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("devtools")
+
+#install.packages(c("BiocManager","vcfR","pcadapt"))
+```
+
+```{r}
+#BiocManager::install("qvalue")
+```
+```{r}
+library(devtools)
+
+```
+```{r}
+#install_github("whitlock/OutFLANK")
+```
+```{r}
+##finding PCS outliers 
+##Isaiah Bluestein
+##05/11/21
+library(pcadapt)
+library(qvalue)
+library(ggplot2)
+
+```
+
+
+```{r}
+##Paths for data 
+vcf.path=data("filtered_3699snps_californicus.vcf")
+meta.path=data("californicus_metadata.csv")
+```
+
+```{r}
+##read in genotype
+genos <- read.pcadapt(vcf.path,type=c("vcf"))
+```
+
+```{r}
+##read in metadata
+meta <- read.csv(meta.path)
+head(meta)
+```
+```{r}
+##plot PCA
+x <- pcadapt(input=genos,K=5)
+plot(x,option="screeplot")
+```
+```{r}
+
+plot(x,option="scores",pop=meta$Group)
+```
+```{r}
+##find the snips
+plot(x,option="manhattan")
+```
+
+```{r}
+qval <- qvalue(x$pvalues)$qvalues
+outliers <- which(qval<0.1)
+length(outliers)
+```
+```{r}
+plot(x$scores[,1]~meta$LAT,pch=19,col="gray")
+
+```
+```{r}
+plot(x$scores[,1]~meta$LAT, pch=19, col="blue")
+
+```
+
+```{r}
+#Selection analysis
+
+library(OutFLANK)
+library(vcfR)
+
+##read in data 
+data <- read.vcfR(vcf.path)
+
+```
+```{r}
+geno <- extract.gt(data)
+dim(geno)
+head(geno[,1:10])
+```
+
+```{r}
+G <- geno
+G[geno %in% c("0/0")] <- 0
+G[geno  %in% c("0/1")] <- 1
+G[geno %in% c("1/1")] <- 2
+G[is.na(G)] <- 9
+tG <- t(G)
+dim(tG)
+```
+
+```{r}
+subpops <- c("TBL","AK4")
+subgen <- tG[meta$SITE%in%subpops,]
+submeta <- subset(meta,SITE%in%subpops)
+```
+
+```{r}
+identical(rownames(subgen), submeta$ID)
+
+```
+
+
+```{r}
+fst <- MakeDiploidFSTMat(subgen,locusNames=1:ncol(subgen),popNames=submeta$SITE)
+```
+
+```{r}
+hist(fst$FST,breaks=50)
+```
+```{r}
+OF <- OutFLANK(fst,LeftTrimFraction=0.01,RightTrimFraction=0.01,
+         Hmin=0.05,NumberOfSamples=2,qthreshold=0.01)
+OutFLANKResultsPlotter(OF,withOutliers=T,
+                       NoCorr=T,Hmin=0.1,binwidth=0.005,
+                       Zoom=F,RightZoomFraction=0.05,titletext=NULL)
+```
+```{r}
+P1 <- pOutlierFinderChiSqNoCorr(fst,Fstbar=OF$FSTNoCorrbar,
+                                dfInferred=OF$dfInferred,qthreshold=0.05,Hmin=0.1)
+outliers <- P1$OutlierFlag==TRUE
+table(outliers)
+```
+```{r}
+plot(P1$LocusName,P1$FST,xlab="Position",ylab="FST",col=rgb(0,0,0,alpha=0.1))
+points(P1$LocusName[outliers],P1$FST[outliers],col="magenta")
+
+```
+
